@@ -125,14 +125,14 @@ def insert_accounts(accounts):
                     account["customer_id"], account["account_number"],
                         account["account_type"], account["currency"],
                         account["current_balance"]
+                    )
                 )
-            )
 
-            result = cursor.fetchone()
+                result = cursor.fetchone()
 
-            if result is not None:
-                    account["account_id"] = result[0]
-                    inserted_accounts.append(account)
+                if result is not None:
+                        account["account_id"] = result[0]
+                        inserted_accounts.append(account)
 
     return inserted_accounts
 
@@ -203,13 +203,13 @@ def insert_transactions(transactions):
                      transaction["transaction_type"], transaction["amount"],
                      transaction["channel"], transaction["status"],
                      transaction["transaction_time"]
+                    )
                 )
-            )
-            result = cursor.fetchone()
+                result = cursor.fetchone()
 
-            if result is not None:
-                transaction["transaction_id"] = result[0]
-                inserted_transactions.append(transaction)
+                if result is not None:
+                    transaction["transaction_id"] = result[0]
+                    inserted_transactions.append(transaction)
 
     return inserted_transactions
             
@@ -257,13 +257,13 @@ def insert_ledger_entries(ledger_entries):
                     ledger_entry["transaction_reference"], ledger_entry["account_number"],
                         ledger_entry["entry_type"], ledger_entry["amount"],
                         ledger_entry["status"], ledger_entry["posted_at"]
+                    )
                 )
-            )
-            result = cursor.fetchone()
+                result = cursor.fetchone()
 
-            if result is not None:
-                ledger_entry["ledger_entry_id"] = result[0]
-                inserted_ledger_entries.append(ledger_entry)
+                if result is not None:
+                    ledger_entry["ledger_entry_id"] = result[0]
+                    inserted_ledger_entries.append(ledger_entry)
 
     return inserted_ledger_entries
 
@@ -281,7 +281,7 @@ def generate_settlement_record(transaction):
         "settlement_amount": transaction["amount"],
         "settlement_status": status_map[transaction["status"]],
         "settlement_time" : transaction["transaction_time"] + 
-                timedelta(minutes = random.randint(3,20))
+                timedelta(minutes = random.randint(5,20))
     }
 
 def generate_settlement_records(transactions):
@@ -309,14 +309,14 @@ def insert_settlement_records(settlement_records):
                     settlement_record["settlement_amount"],
                     settlement_record["settlement_status"],
                     settlement_record["settlement_time"]
+                    )
                 )
-            )
 
-            result = cursor.fetchone()
+                result = cursor.fetchone()
 
-            if result is not  None:
-                settlement_record["settlement_id"] = result[0]
-                inserted_settlement_records.append(settlement_record)
+                if result is not  None:
+                    settlement_record["settlement_id"] = result[0]
+                    inserted_settlement_records.append(settlement_record)
 
     return inserted_settlement_records
     
@@ -344,35 +344,93 @@ if __name__ == "__main__":
     # print("Customers inserted successfully!")
 
 
-
+    # Customers
     customers = generate_customers(5)
     inserted_customers = insert_customers(customers)
     # for customer in inserted_customers:
     #     print(customer)
 
-
+    # Accounts
     accounts = generate_accounts(inserted_customers)
     inserted_accounts = insert_accounts(accounts)
     for account in inserted_accounts:
         print(account)
 
-
+    # Transactions
     transactions = generate_transactions(inserted_accounts)
     inserted_transactions = insert_transactions(transactions)
     for transaction in inserted_transactions:
         print(transaction)
 
-
+    # Generate downstream records
     ledger_entries = generate_ledger_entries(inserted_transactions)
-    inserted_ledger_entries = insert_ledger_entries(ledger_entries)
-    for ledger_entry in inserted_ledger_entries:
-        print(ledger_entry)
-
-
     settlement_records = generate_settlement_records(inserted_transactions)
+
+
+    # ----------------------------------------
+    #           ANOMALY INJECTION 
+    # ----------------------------------------
+
+    # MISSING LEDGER
+    successful_transactions = []
+
+    for transaction in inserted_transactions:
+        if transaction["status"] == "SUCCESS":
+            successful_transactions.append(transaction)
+    if successful_transactions:
+        missing_ledger_transaction = successful_transactions[0]
+
+        missing_ledger_reference = missing_ledger_transaction["reference_number"]
+
+        ledger_entries = [ledger_entry 
+                        for ledger_entry in ledger_entries
+                        if ledger_entry["transaction_reference"] != missing_ledger_reference]
+
+        print("Injected MISSING_LEDGER anomaly for: ",
+            missing_ledger_reference)
+
+    else:
+        print("No successful transaction available. "
+                "MISSING_LEDGER anomaly skipped.")
+
+
+    #MISSING SETTLEMENT
+    if len(successful_transactions) >= 2:   
+        
+        missing_settlement_transaction = successful_transactions[1]
+        missing_settlement_reference = missing_settlement_transaction["reference_number"]
+
+        settlement_records = [
+            settlement_record
+            for settlement_record in settlement_records
+            if settlement_record["transaction_reference"] != missing_settlement_reference
+        ]
+
+        print("Injected MISSING_SETTLEMENT anomaly for:",
+            missing_settlement_reference)
+    else:
+        print(
+            "Not enough successful transactions available. "
+            "MISSING_SETTLEMENT anomaly skipped."
+        )
+
+
+    # Ledger amount mismatch
+    if len(successful_transactions) >= 3:
+        
+
+
+
+    # Insert downstream records
+    inserted_ledger_entries = insert_ledger_entries(ledger_entries)
     inserted_settlement_records = insert_settlement_records(settlement_records)
-    for settlement_record in inserted_settlement_records:
-        print(settlement_record)
+
+
+    # for ledger_entry in inserted_ledger_entries:
+       # print(ledger_entry)
+
+    # for settlement_record in inserted_settlement_records:
+        # print(settlement_record)
 
 
 
