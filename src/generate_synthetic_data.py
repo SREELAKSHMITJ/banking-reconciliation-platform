@@ -417,7 +417,12 @@ if __name__ == "__main__":
 
     # Ledger amount mismatch
     if len(successful_transactions) >= 3:
-        
+        amount_mismatch_transaction = successful_transactions[2]
+
+        amount_mismatch_reference = amount_mismatch_transaction["reference_number"]
+
+        for ledger_entry in ledger_entries:
+            if 
 
 
 
