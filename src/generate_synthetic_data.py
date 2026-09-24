@@ -417,12 +417,37 @@ if __name__ == "__main__":
 
     # Ledger amount mismatch
     if len(successful_transactions) >= 3:
-        amount_mismatch_transaction = successful_transactions[2]
 
-        amount_mismatch_reference = amount_mismatch_transaction["reference_number"]
+    amount_mismatch_transaction = successful_transactions[2]
 
-        for ledger_entry in ledger_entries:
-            if 
+    amount_mismatch_reference = (
+        amount_mismatch_transaction["reference_number"]
+    )
+
+    for ledger_entry in ledger_entries:
+
+        if (
+            ledger_entry["transaction_reference"]
+            == amount_mismatch_reference
+        ):
+
+            ledger_entry["amount"] = round(
+                ledger_entry["amount"] + 25.00,
+                2
+            )
+
+            print(
+                "Injected LEDGER_AMOUNT_MISMATCH anomaly for:",
+                amount_mismatch_reference
+            )
+
+            break
+
+    else:
+        print(
+            "Not enough successful transactions available. "
+            "LEDGER_AMOUNT_MISMATCH anomaly skipped."
+        )
 
 
 
