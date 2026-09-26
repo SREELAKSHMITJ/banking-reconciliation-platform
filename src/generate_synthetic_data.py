@@ -371,7 +371,14 @@ if __name__ == "__main__":
     #           ANOMALY INJECTION 
     # ----------------------------------------
 
-    # MISSING LEDGER
+    #Failed transactions list
+    failed_transactions = []
+
+    for transaction in inserted_transactions:
+        if transaction["status"] == "FAILED":
+            failed_transactions.append(transaction)
+
+    # 1. MISSING LEDGER
     successful_transactions = []
 
     for transaction in inserted_transactions:
@@ -394,7 +401,7 @@ if __name__ == "__main__":
                 "MISSING_LEDGER anomaly skipped.")
 
 
-    #MISSING SETTLEMENT
+    # 2. MISSING SETTLEMENT
     if len(successful_transactions) >= 2:   
         
         missing_settlement_transaction = successful_transactions[1]
@@ -415,33 +422,33 @@ if __name__ == "__main__":
         )
 
 
-    # Ledger amount mismatch
+    # 3. Ledger amount mismatch
     if len(successful_transactions) >= 3:
 
-    amount_mismatch_transaction = successful_transactions[2]
+        amount_mismatch_transaction = successful_transactions[2]
 
-    amount_mismatch_reference = (
-        amount_mismatch_transaction["reference_number"]
-    )
+        amount_mismatch_reference = (
+            amount_mismatch_transaction["reference_number"]
+        )
 
-    for ledger_entry in ledger_entries:
+        for ledger_entry in ledger_entries:
 
-        if (
-            ledger_entry["transaction_reference"]
-            == amount_mismatch_reference
-        ):
+            if (
+                ledger_entry["transaction_reference"]
+                == amount_mismatch_reference
+            ):
 
-            ledger_entry["amount"] = round(
-                ledger_entry["amount"] + 25.00,
-                2
-            )
+                ledger_entry["amount"] = round(
+                    ledger_entry["amount"] + 25.00,
+                    2
+                )
 
-            print(
-                "Injected LEDGER_AMOUNT_MISMATCH anomaly for:",
-                amount_mismatch_reference
-            )
+                print(
+                    "Injected LEDGER_AMOUNT_MISMATCH anomaly for:",
+                    amount_mismatch_reference
+                )
 
-            break
+                break
 
     else:
         print(
@@ -449,6 +456,493 @@ if __name__ == "__main__":
             "LEDGER_AMOUNT_MISMATCH anomaly skipped."
         )
 
+    # 4. Settlement amount mismatch
+    if len(successful_transactions) >= 4:
+
+        settlement_amount_transaction = successful_transactions[3]
+        settlement_amount_reference = (
+            settlement_amount_transaction["reference_number"]
+        )
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == settlement_amount_reference
+            ):
+                settlement_record["settlement_amount"] = round(
+                    settlement_record["settlement_amount"] + 30.00,
+                    2
+                )
+
+                print(
+                    "Injected SETTLEMENT_AMOUNT_MISMATCH anomaly for:",
+                    settlement_amount_reference
+                )
+
+                break
+
+    # 5. LEDGER STATUS MISMATCH
+
+    if len(successful_transactions) >= 5:
+
+        ledger_status_transaction = successful_transactions[4]
+        ledger_status_reference = (
+            ledger_status_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == ledger_status_reference
+            ):
+                ledger_entry["status"] = "PENDING"
+
+                print(
+                    "Injected LEDGER_STATUS_MISMATCH anomaly for:",
+                    ledger_status_reference
+                )
+
+                break    
+
+    # 6. SETTLEMENT STATUS MISMATCH
+
+    if len(successful_transactions) >= 6:
+
+        settlement_status_transaction = successful_transactions[5]
+        settlement_status_reference = (
+            settlement_status_transaction["reference_number"]
+        )
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == settlement_status_reference
+            ):
+                settlement_record["settlement_status"] = "PENDING"
+
+                print(
+                    "Injected SETTLEMENT_STATUS_MISMATCH anomaly for:",
+                    settlement_status_reference
+                )
+
+                break
+
+    # 7. UNEXPECTED LEDGER POSTING
+
+    if len(failed_transactions) >= 1:
+
+        unexpected_ledger_transaction = failed_transactions[0]
+        unexpected_ledger_reference = (
+            unexpected_ledger_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == unexpected_ledger_reference
+            ):
+                ledger_entry["status"] = "POSTED"
+
+                print(
+                    "Injected UNEXPECTED_LEDGER_POSTING anomaly for:",
+                    unexpected_ledger_reference
+                )
+
+                break
+
+    # 8. UNEXPECTED SETTLEMENT
+
+    if len(failed_transactions) >= 2:
+
+        unexpected_settlement_transaction = failed_transactions[1]
+        unexpected_settlement_reference = (
+            unexpected_settlement_transaction["reference_number"]
+        )
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == unexpected_settlement_reference
+            ):
+                settlement_record["settlement_status"] = "SETTLED"
+
+                print(
+                    "Injected UNEXPECTED_SETTLEMENT anomaly for:",
+                    unexpected_settlement_reference
+                )
+
+                break
+
+    #  9. ACCOUNT MISMATCHES
+
+    if len(successful_transactions) >= 7:
+
+        account_mismatch_transaction = successful_transactions[6]
+        account_mismatch_reference = (
+            account_mismatch_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == account_mismatch_reference
+            ):
+                ledger_entry["account_number"] = "ACC_WRONG_LEDGER"
+                break
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == account_mismatch_reference
+            ):
+                settlement_record["account_number"] = "ACC_WRONG_SETTLE"
+                break
+
+        print(
+            "Injected ACCOUNT_MISMATCH anomalies for:",
+            account_mismatch_reference
+        )
+
+    # 10. TRANSACTION TYPE MISMATCH
+
+    if len(successful_transactions) >= 8:
+
+        type_mismatch_transaction = successful_transactions[7]
+        type_mismatch_reference = (
+            type_mismatch_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == type_mismatch_reference
+            ):
+
+                if ledger_entry["entry_type"] != "PURCHASE":
+                    ledger_entry["entry_type"] = "PURCHASE"
+                else:
+                    ledger_entry["entry_type"] = "DEPOSIT"
+
+                print(
+                    "Injected TRANSACTION_TYPE_MISMATCH anomaly for:",
+                    type_mismatch_reference
+                )
+
+                break
+
+    # 11. DUPLICATE TRANSACTION
+
+    if len(failed_transactions) >= 3:
+
+        original_transaction = failed_transactions[2]
+
+        duplicate_transaction = original_transaction.copy()
+
+        duplicate_transaction["reference_number"] = (
+            fake.unique.bothify(text="DUP##########")
+        )
+
+        duplicate_transaction["transaction_time"] = (
+            original_transaction["transaction_time"]
+            + timedelta(seconds=10)
+        )
+        # Remove transaction_id if it exists. 
+        # If it doesn't exist, don't crash — just return None.
+        duplicate_transaction.pop("transaction_id", None)
+
+        inserted_duplicate_transactions = insert_transactions(
+            [duplicate_transaction]
+        )
+
+        if inserted_duplicate_transactions:
+            print(
+                "Injected DUPLICATE_TRANSACTION anomaly for:",
+                duplicate_transaction["reference_number"]
+            )
+
+    # 12. DUPLICATE LEDGER ENTRY
+
+    if len(successful_transactions) >= 9:
+
+        duplicate_ledger_reference = (
+            successful_transactions[8]["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == duplicate_ledger_reference
+            ):
+                duplicate_ledger_entry = ledger_entry.copy()
+
+                ledger_entries.append(
+                    duplicate_ledger_entry
+                )
+
+                print(
+                    "Injected DUPLICATE_LEDGER_ENTRY anomaly for:",
+                    duplicate_ledger_reference
+                )
+
+                break
+
+    # 13. DUPLICATE SETTLEMENT
+
+    if len(successful_transactions) >= 10:
+
+        duplicate_settlement_reference = (
+            successful_transactions[9]["reference_number"]
+        )
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == duplicate_settlement_reference
+            ):
+                duplicate_settlement_record = (
+                    settlement_record.copy()
+                )
+
+                settlement_records.append(
+                    duplicate_settlement_record
+                )
+
+                print(
+                    "Injected DUPLICATE_SETTLEMENT anomaly for:",
+                    duplicate_settlement_reference
+                )
+
+                break
+
+    # 14. LATE LEDGER POSTING
+
+    if len(successful_transactions) >= 11:
+
+        late_ledger_transaction = successful_transactions[10]
+        late_ledger_reference = (
+            late_ledger_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == late_ledger_reference
+            ):
+                ledger_entry["posted_at"] = (
+                    late_ledger_transaction["transaction_time"]
+                    + timedelta(minutes=10)
+                )
+
+                break
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == late_ledger_reference
+            ):
+                settlement_record["settlement_time"] = (
+                    late_ledger_transaction["transaction_time"]
+                    + timedelta(minutes=15)
+                )
+
+                break
+
+        print(
+            "Injected LATE_LEDGER_POSTING anomaly for:",
+            late_ledger_reference
+        )
+
+    # 15. LATE SETTLEMENT
+
+    if len(successful_transactions) >= 12:
+
+        late_settlement_transaction = successful_transactions[11]
+        late_settlement_reference = (
+            late_settlement_transaction["reference_number"]
+        )
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == late_settlement_reference
+            ):
+                settlement_record["settlement_time"] = (
+                    late_settlement_transaction["transaction_time"]
+                    + timedelta(minutes=45)
+                )
+
+                print(
+                    "Injected LATE_SETTLEMENT anomaly for:",
+                    late_settlement_reference
+                )
+
+                break
+
+    # 16. LEDGER BEFORE TRANSACTION
+
+    if len(successful_transactions) >= 13:
+
+        ledger_before_transaction = successful_transactions[12]
+        ledger_before_reference = (
+            ledger_before_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == ledger_before_reference
+            ):
+                ledger_entry["posted_at"] = (
+                    ledger_before_transaction["transaction_time"]
+                    - timedelta(minutes=1)
+                )
+
+                print(
+                    "Injected LEDGER_BEFORE_TRANSACTION anomaly for:",
+                    ledger_before_reference
+                )
+
+                break
+
+    # 17. SETTLEMENT BEFORE TRANSACTION
+
+    if len(successful_transactions) >= 14:
+
+        settlement_before_transaction = (
+            successful_transactions[13]
+        )
+
+        settlement_before_reference = (
+            settlement_before_transaction["reference_number"]
+        )
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == settlement_before_reference
+            ):
+                settlement_record["settlement_time"] = (
+                    settlement_before_transaction["transaction_time"]
+                    - timedelta(minutes=1)
+                )
+
+                print(
+                    "Injected SETTLEMENT_BEFORE_TRANSACTION anomaly for:",
+                    settlement_before_reference
+                )
+
+                break
+
+    # 18. SETTLEMENT BEFORE LEDGER
+
+    if len(successful_transactions) >= 15:
+
+        settlement_before_ledger_transaction = (
+            successful_transactions[14]
+        )
+
+        settlement_before_ledger_reference = (
+            settlement_before_ledger_transaction["reference_number"]
+        )
+
+        for ledger_entry in ledger_entries:
+
+            if (
+                ledger_entry["transaction_reference"]
+                == settlement_before_ledger_reference
+            ):
+                ledger_entry["posted_at"] = (
+                    settlement_before_ledger_transaction[
+                        "transaction_time"
+                    ]
+                    + timedelta(minutes=2)
+                )
+
+                break
+
+        for settlement_record in settlement_records:
+
+            if (
+                settlement_record["transaction_reference"]
+                == settlement_before_ledger_reference
+            ):
+                settlement_record["settlement_time"] = (
+                    settlement_before_ledger_transaction[
+                        "transaction_time"
+                    ]
+                    + timedelta(minutes=1)
+                )
+
+                break
+
+        print(
+            "Injected SETTLEMENT_BEFORE_LEDGER anomaly for:",
+            settlement_before_ledger_reference
+        )
+
+    # 19. MISSING TRANSACTION / ORPHAN DOWNSTREAM RECORDS
+
+    # Only continue if both lists contain data. Empty lists are False.
+    if inserted_accounts and inserted_transactions:
+
+        orphan_reference = (
+            fake.unique.bothify(text="ORPH##########")
+        )
+
+        orphan_time = (
+            inserted_transactions[0]["transaction_time"]
+        )
+
+        # ledger_entries.transaction_reference & settlement_records.transaction_reference
+        # do not have foreign keys directly 
+        # forcing them to exist in transactions.reference_number.
+
+        orphan_ledger = {
+            "transaction_reference": orphan_reference,
+            "account_number":
+                inserted_accounts[0]["account_number"],
+            "entry_type": "PURCHASE",
+            "amount": 333.33,
+            "status": "POSTED",
+            "posted_at":
+                orphan_time + timedelta(minutes=1)
+        }
+
+        orphan_settlement = {
+            "transaction_reference": orphan_reference,
+            "account_number":
+                inserted_accounts[0]["account_number"],
+            "settlement_amount": 333.33,
+            "settlement_status": "SETTLED",
+            "settlement_time":
+                orphan_time + timedelta(minutes=3)
+        }
+
+        ledger_entries.append(orphan_ledger)
+        settlement_records.append(orphan_settlement)
+
+        print(
+            "Injected MISSING_TRANSACTION anomaly for:",
+            orphan_reference
+        )
+
+        # FULL OUTER JOIN in: core.reconciliation_base is what lets that orphan 
+        # reference still appear even though the transaction side is missing.
 
 
     # Insert downstream records
@@ -461,23 +955,6 @@ if __name__ == "__main__":
 
     # for settlement_record in inserted_settlement_records:
         # print(settlement_record)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -526,3 +1003,15 @@ if __name__ == "__main__":
 # List - collection of items
 # Dictionary - one object's properties
 # Tuple - Fixed group of values
+
+# break - Search through the ledger list until
+# you find the record I want. Once you find and change it, stop searching.
+
+# Faker has a function called bothify() -> replace special placeholders
+# # → random digit      |    ? → random letter
+
+# SYN...  → normal synthetic transaction
+# DUP...  → intentionally created duplicate-style transaction
+# ORPH... → orphan/downstream-only record
+
+# For dictionaries: dictionary.pop("key") -> Remove this key/value pair from the dictionary.
