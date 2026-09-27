@@ -189,3 +189,110 @@ SELECT
 FROM comparison
 GROUP BY test_result
 ORDER BY test_result;
+
+
+-- =====================================================
+-- AMOUNT MISMATCH QA FIXTURE
+-- QA_AMOUNT_SETTLE_001
+--
+-- Transaction = 100
+-- Ledger      = 100
+-- Settlement  = 130
+--
+-- Expected:
+-- REC005 = Settlement amount mismatch
+-- REC006 = Ledger vs settlement amount mismatch
+-- =====================================================
+
+
+-- Transaction
+INSERT INTO core.transactions
+(
+    account_id,
+    reference_number,
+    transaction_type,
+    amount,
+    channel,
+    status,
+    transaction_time
+)
+
+SELECT
+    account_id,
+    'QA_AMOUNT_SETTLE_001',
+    'PURCHASE',
+    100.00,
+    'ONLINE',
+    'SUCCESS',
+    CURRENT_TIMESTAMP - INTERVAL '1 day'
+
+FROM core.accounts
+ORDER BY account_id
+LIMIT 1
+
+ON CONFLICT (reference_number)
+DO NOTHING;
+
+
+-- Ledger
+INSERT INTO core.ledger_entries
+(
+    transaction_reference,
+    account_number,
+    entry_type,
+    amount,
+    status,
+    posted_at
+)
+
+SELECT
+    t.reference_number,
+    a.account_number,
+    t.transaction_type,
+    100.00,
+    'POSTED',
+    t.transaction_time + INTERVAL '1 minute'
+
+FROM core.transactions t
+
+JOIN core.accounts a
+    ON t.account_id = a.account_id
+
+WHERE t.reference_number = 'QA_AMOUNT_SETTLE_001'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM core.ledger_entries l
+    WHERE l.transaction_reference = 'QA_AMOUNT_SETTLE_001'
+);
+
+
+-- Settlement
+INSERT INTO core.settlement_records
+(
+    transaction_reference,
+    account_number,
+    settlement_amount,
+    settlement_status,
+    settlement_time
+)
+
+SELECT
+    t.reference_number,
+    a.account_number,
+    130.00,
+    'SETTLED',
+    t.transaction_time + INTERVAL '10 minutes'
+
+FROM core.transactions t
+
+JOIN core.accounts a
+    ON t.account_id = a.account_id
+
+WHERE t.reference_number = 'QA_AMOUNT_SETTLE_001'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM core.settlement_records s
+    WHERE s.transaction_reference = 'QA_AMOUNT_SETTLE_001'
+);
