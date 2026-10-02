@@ -29,10 +29,10 @@ def update_exception_status(exception_id, updated_status, change_note = None):
             old_status = result[0]
 
             # Find this status. If it doesn't exist, give me an empty set.
-            if new_status not in ALLOWED_TRANSITIONS.get(old_status, set()):
+            if updated_status not in ALLOWED_TRANSITIONS.get(old_status, set()):
                 raise ValueError(
                     f"Invalid status transition: "
-                    f"{old_status} -> {new_status}"
+                    f"{old_status} -> {updated_status}"
                 )
 
             # Update current exception status
@@ -48,7 +48,7 @@ def update_exception_status(exception_id, updated_status, change_note = None):
                     END
                 WHERE exception_id = %s;
                 """,
-                (new_status, new_status, exception_id)
+                (updated_status, updated_status, exception_id)
             )
 
             # Store audit history
@@ -63,10 +63,10 @@ def update_exception_status(exception_id, updated_status, change_note = None):
                 )
                 VALUES (%s, %s, %s, %s);
                 """,
-                (exception_id, old_status, new_status, change_note)
+                (exception_id, old_status, updated_status, change_note)
             )
 
-    return old_status, new_status
+    return old_status, updated_status
 
 if __name__ == "__main__":
     # old_status, new_status = update_exception_status(exception_id = 2,
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     print(
         f"Exception {exception_id} updated: "
-        f"{old_status} -> {new_status}"
+        f"{old_status} -> {updated_status}"
     )
 
 
