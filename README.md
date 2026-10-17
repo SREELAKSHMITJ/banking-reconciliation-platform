@@ -17,6 +17,20 @@ The project is designed to simulate a real-world banking reconciliation workflow
 - Delivers operational analytics through PostgreSQL reporting views
 - Provides refreshable Excel and Power BI dashboards
 
+## Project Highlights
+
+- **24** reconciliation rules
+- **20** automated data-quality checks
+- **19** controlled anomaly scenarios
+- **29/29** Pytest tests passing
+- **7** reusable PostgreSQL reporting views
+- Excel + Power Query operational dashboard
+- Three-page Power BI analytical report
+
+### Power BI Overview
+
+![Power BI Overview Dashboard](docs/screenshots/powerbi-overview.png)
+
 ## Tech Stack
 
 ### Database & SQL
